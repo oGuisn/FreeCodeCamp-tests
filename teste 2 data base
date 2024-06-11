@@ -1,0 +1,49 @@
+import pandas as pd
+
+def analyze_demographic_data(data_path):
+  """
+  Analyzes demographic data from a CSV file.
+
+  Args:
+      data_path: Path to the CSV file containing the demographic data.
+
+  Returns:
+      A dictionary containing the results of the analysis.
+  """
+
+  # Read the CSV data into a Pandas DataFrame
+  df = pd.read_csv(data_path)
+
+  # Analyze data
+  analysis = {
+      "number_of_people_by_race": df['race'].value_counts().sort_values(ascending=False),
+      "average_age_of_men": round(df[df['sex'] == "Male"]["age"].mean(), 1),
+      "percentage_with_bachelors": round(
+          (df["education"] == "Bachelors").mean() * 100, 1
+      ),
+      "percentage_advanced_education_over_50k": round(
+          (df[(df["education"].isin(["Bachelors", "Masters", "Doctorate"])) & (df["salary"] == ">50K")]).shape[0] /
+          df[(df["education"].isin(["Bachelors", "Masters", "Doctorate"]))].shape[0] * 100, 1
+      ),
+      "percentage_no_advanced_education_over_50k": round(
+          (df[(~df["education"].isin(["Bachelors", "Masters", "Doctorate"])) & (df["salary"] == ">50K")]).shape[0] /
+          df[~df["education"].isin(["Bachelors", "Masters", "Doctorate"])].shape[0] * 100, 1
+      ),
+      "minimum_hours_worked": df["hours-per-week"].min(),
+      "percentage_min_hours_over_50k": round(
+          (df[(df["hours-per-week"] == df["hours-per-week"].min()) & (df["salary"] == ">50K")]).shape[0] /
+          df[df["hours-per-week"] == df["hours-per-week"].min()].shape[0] * 100, 1
+      ),
+      "highest_earning_country": df[df["salary"] == ">50K"]["native-country"].value_counts().sort_values(ascending=False).index[0],
+      "highest_earning_country_percentage": round(
+          df[df["salary"] == ">50K"]["native-country"].value_counts().sort_values(ascending=False)[0] /
+          df[df["salary"] == ">50K"].shape[0] * 100, 1
+      ),
+      "most_popular_occupation_over_50k_india": df[(df["salary"] == ">50K") & (df["native-country"] == "India")]['occupation'].mode()[0]
+  }
+
+  return analysis
+
+# Example usage (assuming the data file is named 'demographic_data.csv')
+# results = analyze_demographic_data('demographic_data.csv')
+# print(results)
