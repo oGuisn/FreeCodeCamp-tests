@@ -1,0 +1,60 @@
+import pandas as pd
+from scipy import stats
+import matplotlib.pyplot as plt
+
+
+def load_data():
+  """Loads sea level data from a CSV file.
+
+  Returns:
+      A Pandas DataFrame containing the data.
+  """
+  df = pd.read_csv("epa-sea-level.csv")
+  return df
+
+
+def plot_data_and_regression(df):
+  """
+  Creates a scatter plot with linear regressions for all data and since 2000.
+
+  Args:
+      df: A Pandas DataFrame containing the sea level data.
+  """
+  fig, ax = plt.subplots(figsize=(10, 6))
+
+  # Scatter plot for all data
+  ax.scatter(df["Year"], df["CSIRO Adjusted Sea Level"])
+
+  # Linear regression for all data
+  slope, intercept = stats.linregress(df["Year"], df["CSIRO Adjusted Sea Level"])
+  x_all = [df["Year"].min(), 2050]
+  y_all = [slope * x + intercept for x in x_all]
+  ax.plot(x_all, y_all, color="red", label="All Data Trend")
+
+  # Filter data from year 2000
+  df_recent = df[df["Year"] >= 2000]
+
+  # Linear regression for data since 2000
+  slope_recent, intercept_recent = stats.linregress(
+      df_recent["Year"], df_recent["CSIRO Adjusted Sea Level"]
+  )
+  x_recent = [2000, 2050]
+  y_recent = [slope_recent * x + intercept_recent for x in x_recent]
+  ax.plot(x_recent, y_recent, color="green", label="Since 2000 Trend")
+
+  plt.title("Rise in Sea Level")
+  plt.xlabel("Year")
+  plt.ylabel("Sea Level (inches)")
+  plt.legend()
+  plt.tight_layout()
+  # You can save the figure using plt.savefig("sea_level_prediction.png")
+
+
+def main():
+  """Loads data and creates the plot."""
+  df = load_data()
+  plot_data_and_regression(df.copy())
+
+
+if __name__ == "__main__":
+  main()
