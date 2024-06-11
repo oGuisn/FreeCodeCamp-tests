@@ -1,0 +1,109 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+
+def load_data():
+  """Loads the forum page view data from a CSV file.
+
+  Returns:
+      A Pandas DataFrame containing the data.
+  """
+  df = pd.read_csv("fcc-forum-pageviews.csv")
+  df.set_index("date", inplace=True)
+  return df
+
+
+def clean_data(df):
+  """
+  Cleans the data by removing outliers (top/bottom 2.5%).
+
+  Args:
+      df: A Pandas DataFrame containing the forum page view data.
+
+  Returns:
+      A Pandas DataFrame with outliers removed.
+  """
+  q1 = df["page_views"].quantile(0.025)
+  q3 = df["page_views"].quantile(0.975)
+  return df[(df["page_views"] >= q1) & (df["page_views"] <= q3)]
+
+
+def draw_line_plot(df):
+  """
+  Creates a line chart showing daily page views.
+
+  Args:
+      df: A Pandas DataFrame containing the forum page view data.
+  """
+  df_clean = clean_data(df.copy())
+  fig, ax = plt.subplots(figsize=(12, 6))
+  ax.plot(df_clean.index, df_clean["page_views"])
+  plt.title("Daily freeCodeCamp Forum Page Views 5/2016-12/2019")
+  plt.xlabel("Date")
+  plt.ylabel("Page Views")
+  plt.xticks(rotation=45)
+  plt.tight_layout()
+  # You can save the figure using plt.savefig("daily_page_views.png")
+
+
+def draw_bar_plot(df):
+  """
+  Creates a bar chart showing average daily page views by month and year.
+
+  Args:
+      df: A Pandas DataFrame containing the forum page view data.
+  """
+  df_clean = clean_data(df.copy())
+  df_avg_monthly = df_clean.resample("M").mean()
+  fig, ax = plt.subplots(figsize=(10, 6))
+  df_avg_monthly.plot(kind="bar", ax=ax)
+  plt.title("Months")
+  plt.xlabel("Years")
+  plt.ylabel("Average Page Views")
+  plt.xticks(rotation=0)
+  plt.legend(labels=df_avg_monthly.index.month_name())
+  plt.tight_layout()
+  # You can save the figure using plt.savefig("monthly_page_views.png")
+
+
+def draw_box_plot(df):
+  """
+  Creates box plots showing page view distribution by year and month.
+
+  Args:
+      df: A Pandas DataFrame containing the forum page view data.
+  """
+  df_clean = clean_data(df.copy())
+  fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 6))
+  sns.boxplot(
+      x="year",
+      y="page_views",
+      showmeans=True,
+      data=df_clean,
+      ax=ax1,
+  )
+  ax1.set_title("Year-wise Box Plot (Trend)")
+  ax1.set_xlabel("Year")
+  ax1.set_ylabel("Page Views")
+
+  sns.boxplot(
+      x="month",
+      y="page_views",
+      showmeans=True,
+      data=df_clean,
+      ax=ax2,
+  )
+  ax2.set_title("Month-wise Box Plot (Seasonality)")
+  ax2.set_xlabel("Month")
+  ax2.set_ylabel("Page Views")
+  plt.xticks(rotation=45)
+  plt.tight_layout()
+  # You can save the figure using plt.savefig("box_plots.png")
+
+
+# Example usage (assuming the data file is named 'fcc-forum-pageviews.csv')
+df = load_data()
+draw_line_plot(df.copy())
+draw_bar_plot(df.copy())
+draw_box_plot(df.copy())
