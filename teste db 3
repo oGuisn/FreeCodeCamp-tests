@@ -1,0 +1,108 @@
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+def load_data():
+  """Loads the medical examination data from a CSV file.
+
+  Returns:
+      A Pandas DataFrame containing the data.
+  """
+  df = pd.read_csv("medical_examination.csv")
+  return df
+
+def add_overweight_column(df):
+  """
+  Adds a new column 'overweight' to the DataFrame.
+
+  Args:
+      df: A Pandas DataFrame containing the medical examination data.
+
+  Returns:
+      A Pandas DataFrame with the 'overweight' column added.
+  """
+  df["overweight"] = (df["weight"] / (df["height"] / 100) ** 2) > 25
+  df["overweight"] = df["overweight"].astype(int)  # Convert to int (0 or 1)
+  return df
+
+def normalize_data(df):
+  """
+  Normalizes cholesterol and glucose data (0: good, 1: bad).
+
+  Args:
+      df: A Pandas DataFrame containing the medical examination data.
+
+  Returns:
+      A Pandas DataFrame with normalized cholesterol and glucose data.
+  """
+  df["cholesterol"] = df["cholesterol"].replace([2, 3], 1)
+  df["gluc"] = df["gluc"].replace([2, 3], 1)
+  return df
+
+def draw_cat_plot(df):
+  """
+  Creates a categorical plot showing value counts for each feature.
+
+  Args:
+      df: A Pandas DataFrame containing the medical examination data.
+  """
+  df_cat = pd.melt(
+      frame=df,
+      value_vars=["cholesterol", "gluc", "smoke", "alco", "active", "overweight"],
+      id_vars=["cardio"],
+  )
+  df_cat = df_cat.rename(columns={"variable": "feature"})
+  fig = sns.catplot(
+      x="feature",
+      y="value",
+      hue="cardio",
+      col="cardio",
+      kind="count",
+      data=df_cat,
+      aspect=2,
+  )
+  plt.show()
+  return fig
+
+def clean_data(df):
+  """
+  Cleans the data by filtering out incorrect measurements.
+
+  Args:
+      df: A Pandas DataFrame containing the medical examination data.
+
+  Returns:
+      A Pandas DataFrame with cleaned data.
+  """
+  df_clean = df.copy()
+  df_clean = df_clean[df_clean["ap_lo"] <= df_clean["ap_hi"]]  # Filter diastolic pressure
+  height_q1 = df_clean["height"].quantile(0.025)
+  height_q3 = df_clean["height"].quantile(0.975)
+  weight_q1 = df_clean["weight"].quantile(0.025)
+  weight_q3 = df_clean["weight"].quantile(0.975)
+  df_clean = df_clean[(df_clean["height"] >= height_q1) & (df_clean["height"] <= height_q3)]
+  df_clean = df_clean[(df_clean["weight"] >= weight_q1) & (df_clean["weight"] <= weight_q3)]
+  return df_clean
+
+def draw_heat_map(df):
+  """
+  Creates a correlation heatmap of the data.
+
+  Args:
+      df: A Pandas DataFrame containing the cleaned medical examination data.
+  """
+  df_clean = clean_data(df.copy())
+  corr = df_clean.corr()
+  mask = np.zeros_like(corr, dtype=np.bool)
+  mask[np.triu_indices_n(mask.shape[0])] = True
+  fig, ax = plt.subplots(figsize=(10, 10))
+  sns.heatmap(corr, mask=mask, annot=True, ax=ax)
+  plt.show()
+  return fig
+
+# Example usage (assuming the data file is named 'medical_examination.csv')
+df = load_data()
+df = add_overweight_column(df)
+df = normalize_data(df)
+fig_cat = draw_cat_plot(df.copy())
+fig_heat = draw_heat_map(
